@@ -71,14 +71,10 @@ class ClonesWidget(object):
         self.refresh_ui()
 
     def OnExportAll(self, _event: Any) -> None:
-        print('ExportAll')
-        self._state.export('exported.xlsx')
-        print('Done')
+        self.export_clones()
 
     def OnExportEverything(self, _event: Any) -> None:
-        print('ExportAll')
-        self._state.export('exported.xlsx', everything=True)
-        print('Done')
+        self.export_clones(everything=True)
 
     def OnListBox(self, _event: Any) -> None:
         self.refresh_ui()
@@ -116,6 +112,19 @@ class ClonesWidget(object):
                                                       dlg.GetValue())
 
                         self._root.refresh_ui()
+
+    def export_clones(self, everything: bool=False):
+        with wx.FileDialog(self._root.frame, "Export clones",
+                           wildcard="Spreadsheet|*.xlsx",
+                           style=wx.FD_SAVE) as widget:
+            if widget.ShowModal() != wx.ID_CANCEL:
+                filename = widget.GetPath()
+
+                try:
+                    self._state.export(filename, everything=everything)
+                except Exception as error:
+                    wx.LogError(f'Could not save file "{filename}":\n{error}')
+                    raise
 
     def refresh_ui(self, *_args: Any, **_kwargs: Any) -> None:
         groups = [k for k, _ in self._state.clones_groups()]
