@@ -61,7 +61,7 @@ class ClonesWidget(object):
         wx_bind('clones_report', wx.grid.EVT_GRID_CELL_LEFT_DCLICK,
                 self.OnCellDoubleClick)
 
-        wx_bind('clones_export_all', wx.EVT_BUTTON, self.OnExportAll)
+        wx_bind('clones_export', wx.EVT_BUTTON, self.OnExportAll)
         wx_bind('clones_export_everything', wx.EVT_BUTTON, self.OnExportEverything)
         wx_bind('clones_save', wx.EVT_BUTTON, root.save_state)
         wx_bind('clones_load', wx.EVT_BUTTON, root.load_state)
