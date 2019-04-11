@@ -154,7 +154,7 @@ class State:
     def undo_count(self) -> int:
         return len(self._undo_history)
 
-    def export(self, filename: str, group: Optional[str]=None) -> None:
+    def export(self, filename: str, group: Optional[str]=None, everything: bool=False) -> None:
         groups = [(group, False)] if group is not None else self.clones_groups()
 
         workbook = openpyxl.Workbook()
@@ -174,7 +174,7 @@ class State:
         last_row = 1
         for group, is_split in groups:
             clones = self.clones_get_group(group)
-            if not is_split:
+            if not (is_split or everything):
                 clones = [clone for clone in clones
                           if any(ko and ko['picked']
                                  for ko in clone['knockouts'].values())]
