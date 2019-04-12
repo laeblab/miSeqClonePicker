@@ -275,24 +275,39 @@ class State:
 
     def _init_ko_mapping(self) -> None:
         miseq_targets = set(self.miseq_target_names())
-        used_miseq_targets = set()
-        default_ko_mapping = dict.fromkeys(self.samplesheet_target_names())
+        target_names = set(self.samplesheet_target_names())
 
-        for key in default_ko_mapping:
-            if key in miseq_targets:
-                default_ko_mapping[key] = key
-                used_miseq_targets.add(key)
+        candidates = []
+        for target_key in target_names:
+            # Exact matching
+            if target_key in miseq_targets:
+                candidates.append((target_key, target_key))
+                continue
 
-        for key, value in default_ko_mapping.items():
-            if not value:
-                candidate = None
-                for target in set(miseq_targets) - used_miseq_targets:
-                    if target.lower().replace(' ', '_').startswith(key.lower().replace(' ', '_')):
-                        if not candidate or len(candidate) > len(target):
-                            candidate = target
+            # Partial/case-insensitive matching
+            mangled_target_key = target_key.lower().replace(' ', '_')
+            for miseq_key in miseq_targets:
+                mangled_miseq_key = miseq_key.lower().replace(' ', '_')
 
-                if candidate:
-                    default_ko_mapping[key] = candidate
+                if mangled_target_key.startswith(mangled_miseq_key):
+                    candidates.append((target_key, miseq_key))
+                elif mangled_miseq_key.startswith(mangled_target_key):
+                    candidates.append((target_key, miseq_key))
+
+        def _min_len(item):
+            return min(len(value) for value in item)
+
+        candidates.sort(key=_min_len, reverse=True)
+
+        default_ko_mapping = {}
+        used_miseq_keys = set()
+        for target_key, miseq_key in candidates:
+            if target_key not in default_ko_mapping and miseq_key not in used_miseq_keys:
+                default_ko_mapping[target_key] = miseq_key
+                used_miseq_keys.add(miseq_key)
+
+        for key in target_names:
+            default_ko_mapping.setdefault(key)
 
         self.default_ko_mapping = default_ko_mapping
         self.ko_mapping = dict(default_ko_mapping)
