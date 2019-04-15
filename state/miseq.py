@@ -93,9 +93,20 @@ def load(filename: str) -> MiSeqOutput:
     return knockouts
 
 
+def is_picked(miseq: MiSeqOutput, target: str, index: int) -> bool:
+    return miseq[target][index]['picked']
+
+
 def toggle_picked(miseq: MiSeqOutput, target: str, index: int) -> MiSeqOutput:
     miseq = copy.deepcopy(miseq)
-    miseq[target][index]['picked'] = not miseq[target][index]['picked']
+    miseq[target][index]['picked'] = not is_picked(miseq, target, index)
+
+    return miseq
+
+
+def set_picked(miseq: MiSeqOutput, target: str, index: int, picked: bool) -> MiSeqOutput:
+    miseq = copy.deepcopy(miseq)
+    miseq[target][index]['picked'] = picked
 
     return miseq
 

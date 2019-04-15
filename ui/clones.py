@@ -83,6 +83,7 @@ class ClonesWidget(object):
         if self._clones:
             row = event.GetRow()
 
+            clone = None
             result = None
             current_row = 0
             for clone in self._clones:
@@ -97,7 +98,11 @@ class ClonesWidget(object):
                 current_row += len(clone['knockouts'])
 
             if result is not None:
-                if _COL_KOS <= event.GetCol() < _COL_COMMENT:
+                if event.GetCol() < _COL_KOS:
+                    self._state.miseq_toggle_all(clone)
+
+                    self._root.refresh_ui()
+                elif event.GetCol() < _COL_COMMENT:
                     self._state.miseq_toggle_picked(result['target'],
                                                     result['index'])
 

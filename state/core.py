@@ -103,6 +103,18 @@ class State:
         self.miseq = miseq.toggle_picked(self.miseq, target, index)
         self._append_undo_history(state)
 
+    def miseq_toggle_all(self, clone: Clone) -> None:
+        state = self._store_state()
+
+        any_picked = False
+        for ko in clone['knockouts'].values():
+            any_picked |= miseq.is_picked(self.miseq, ko['target'], ko['index'])
+
+        for ko in clone['knockouts'].values():
+            self.miseq = miseq.set_picked(self.miseq, ko['target'], ko['index'], not any_picked)
+
+        self._append_undo_history(state)
+
     def miseq_set_comment(self, target: str, index: int, comment: str) -> None:
         state = self._store_state()
         self.miseq = miseq.set_comment(self.miseq, target, index, comment)
