@@ -60,7 +60,7 @@ def load_miseq_table(filename: str) -> MiSeqOutput:
                                      reverse=True)
 
                 if any(peak['inframe'] for peak in result['peaks']):
-                    result['comment'] = '(inframe)'
+                    result['comment'] = 'In-frame'
 
                 result['peaks'].sort(key=lambda peak: peak['pct'],
                                      reverse=True)
