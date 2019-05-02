@@ -48,7 +48,7 @@ class State:
 
         self._undo_history = []  # type: _SnapshotList
         self._redo_history = []  # type: _SnapshotList
-        self._saved_state = None  # type: Optional[_Snapshot]
+        self._saved_state = self._store_state()  # type: _Snapshot
 
     def undo(self) -> None:
         if self._undo_history:
