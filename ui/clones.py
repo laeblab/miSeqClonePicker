@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import wx
+import wx.propgrid
 
 from typing import Any, List
 
@@ -43,6 +44,7 @@ class ClonesWidget(object):
         self._sort_by_picked = wx_find('clones_sort_by_picked')
         self._show_picked = wx_find('clones_show_picked')
         self._groups = wx_find('clones_groups')
+        self._props = wx_find('clones_properties')
 
         self.grid = wx_find('clones_report')
         self.grid.CreateGrid(0, _NUM_COLUMNS)
@@ -132,6 +134,16 @@ class ClonesWidget(object):
                     raise
 
     def refresh_ui(self, *_args: Any, **_kwargs: Any) -> None:
+        self._refresh_groups()
+
+        group = None
+        for idx in self._groups.GetSelections():
+            group = self._groups.GetString(idx)
+
+        self._refresh_clones(group)
+        self._refresh_statistics(group)
+
+    def _refresh_groups(self):
         groups = [k for k, _ in self._state.clones_groups()]
         ui_groups = [self._groups.GetString(idx)
                      for idx in range(self._groups.GetCount())]
@@ -142,10 +154,7 @@ class ClonesWidget(object):
                 self._groups.InsertItems(groups, 0)
                 self._groups.SetSelection(0)
 
-        group = None
-        for idx in self._groups.GetSelections():
-            group = self._groups.GetString(idx)
-
+    def _refresh_clones(self, group):
         if group is None:
             self._reset_grid(_NUM_COLUMNS, 0)
             return
@@ -172,6 +181,67 @@ class ClonesWidget(object):
 
         for column in (_COL_KOS, _COL_INDELS, _COL_INDELS_PCT, _COL_COMMENT):
             self.grid.AutoSizeColumn(column)
+
+    def _refresh_statistics(self, group):
+        props = self._props
+        props.Clear()
+
+        if not group:
+            return
+
+        def _add_category(value):
+            props.Append(wx.propgrid.PropertyCategory(value))
+
+        def _add_property(label, value):
+            props.Append(wx.propgrid.IntProperty(label, wx.propgrid.PG_LABEL, value))
+
+        stats = self._knockout_stats(group)
+        count = stats['clones']['count']
+
+        _add_category('Clones')
+        _add_property('Clone count', count)
+        for key, value in enumerate(stats['clones']['with_kos']):
+            _add_property('Clones with data for %i KO(s)' % (key,), value)
+
+        for key, values in sorted(stats['knockouts'].items()):
+            _add_category(key)
+            _add_property('Clones with %s' % (key,), values['has_data'])
+
+        _add_category('%Samples with indel')
+        for key, value in stats['indels']:
+            _add_property('%r with %r' % key, (value * 100) // count)
+
+    def _knockout_stats(self, group):
+        data = self._state.clones_get_group(group)
+
+        knockout_count = [0] * (len(data[0]['knockouts']) + 1)
+        for clone in data:
+            knockout_count[sum(map(bool, clone['knockouts'].values()))] += 1
+
+        knockouts = {}
+        for key in sorted(data[0]['knockouts']):
+            knockouts[key] = {
+                'has_data': sum(bool(clone['knockouts'][key]) for clone in data),
+            }
+
+        indels = {}
+        for clone in data:
+            for knockout, values in clone['knockouts'].items():
+                if values is not None:
+                    for peak in values['peaks']:
+                        key = (knockout, peak['indel'])
+                        indels[key] = indels.get(key, 0) + 1
+
+        sorted_indels = sorted(indels.items(), key=lambda it: it[-1], reverse=True)
+
+        return {
+            'clones': {
+                'count': sum(knockout_count),
+                'with_kos': knockout_count,
+            },
+            'knockouts': knockouts,
+            'indels': sorted_indels[:10],
+        }
 
     def _draw_clone(self, clone: Clone, row: int) -> None:
         if any(ko['picked'] for ko in clone['knockouts'].values() if ko):

@@ -7,9 +7,26 @@ import wx
 import wx.xrc
 # Explicit import of wx.grid required to register widget for XRC
 import wx.grid
+import wx.propgrid
 
 import ui
 import state
+
+
+class PropGridXMLHandler(wx.xrc.XmlResourceHandler):
+    def CanHandle(self, node):
+        return self.IsOfClass(node, 'wxPropertyGridManager')
+
+    def DoCreateResource(self):
+        assert self.GetInstance() is None
+        widget = wx.propgrid.PropertyGrid(self.GetParentAsWindow(),
+                                          self.GetID(),
+                                          self.GetPosition(),
+                                          self.GetSize(),
+                                          self.GetStyle())
+        widget.SetName(self.GetName())
+        self.SetupWindow(widget)
+        return widget
 
 
 class MyApp(wx.App):
@@ -17,7 +34,10 @@ class MyApp(wx.App):
         wx.App.__init__(self, *args, **kwargs)
 
     def OnInit(self) -> bool:
-        resources = wx.xrc.XmlResource('ui.xrc')
+        resources = wx.xrc.XmlResource()
+        resources.AddHandler(PropGridXMLHandler())
+        resources.Load('ui.xrc')
+
         self.frame = resources.LoadFrame(None, 'frame')
         self.frame.SetInitialSize(wx.Size(1024, 768))
         self.frame.Show()
