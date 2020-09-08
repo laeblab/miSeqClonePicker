@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 
 from typing import Any, List, Optional
@@ -36,7 +37,9 @@ class MyApp(wx.App):
     def OnInit(self) -> bool:
         resources = wx.xrc.XmlResource()
         resources.AddHandler(PropGridXMLHandler())
-        resources.Load('ui.xrc')
+
+        xrc_filepath = os.path.join(os.path.dirname(__file__), 'ui.xrc')
+        resources.Load(xrc_filepath)
 
         self.frame = resources.LoadFrame(None, 'frame')
         self.frame.SetInitialSize(wx.Size(1024, 768))
