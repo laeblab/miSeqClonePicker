@@ -168,7 +168,7 @@ class State:
 
     def export(self, filename: str, everything: bool=False) -> None:
         workbook = openpyxl.Workbook()
-        sheet = workbook.get_active_sheet()
+        sheet = workbook.active
 
         bd_fat_bottom = openpyxl.styles.borders.Border(bottom=openpyxl.styles.borders.Side('medium'))
         bd_thin_bottom = openpyxl.styles.borders.Border(bottom=openpyxl.styles.borders.Side('thin'))
