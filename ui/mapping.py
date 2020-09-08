@@ -22,11 +22,15 @@ class KOMappingWidget(object):
         self.ss_list.ClearAll()
         self.ss_list.AppendColumn('SampleSheet targets')
         self.ss_list.AppendColumn('miSeq targets')
+        # FIXME: Workaround for dark theme being applied
+        self.ss_list.SetForegroundColour(wx.Colour(35, 35, 35))
 
         self.miseq_list = wx_find('mapping_miseq')
         self.miseq_list.ClearAll()
         self.miseq_list.AppendColumn('miSeq targets')
         self.miseq_list.AppendColumn('SampleSheet targets')
+        # FIXME: Workaround for dark theme being applied
+        self.miseq_list.SetForegroundColour(wx.Colour(35, 35, 35))
 
         self.ss_list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnViewChanged)
         self.miseq_list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnMappingChanged)
