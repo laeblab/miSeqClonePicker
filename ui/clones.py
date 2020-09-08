@@ -206,10 +206,12 @@ class ClonesWidget(object):
         for key, values in sorted(stats['knockouts'].items()):
             _add_category(key)
             _add_property('Clones with %s' % (key,), values['has_data'])
+            _add_property('Clones with indels for %s' % (key,), values['has_peaks'])
+            _add_property('Clones with in-frame for %s' % (key,), values['inframe'])
 
         _add_category('%Samples with indel')
         for key, value in stats['indels']:
-            _add_property('%r with %r' % key, (value * 100) // count)
+            _add_property('%% %r with %r' % key, (value * 100) // count)
 
     def _knockout_stats(self, group):
         data = self._state.clones_get_group(group)
@@ -220,8 +222,22 @@ class ClonesWidget(object):
 
         knockouts = {}
         for key in sorted(data[0]['knockouts']):
+            has_data = 0
+            has_peaks = 0
+            inframe = 0
+
+            for clone in data:
+                knockout = clone['knockouts'][key]
+                if knockout:
+                    has_data += 1
+                    has_peaks += bool(knockout['peaks'])
+                    inframe += any(abs(peak['indel']) % 3 == 0
+                                   for peak in knockout['peaks'])
+
             knockouts[key] = {
-                'has_data': sum(bool(clone['knockouts'][key]) for clone in data),
+                'has_data': has_data,
+                'has_peaks': has_peaks,
+                'inframe': inframe,
             }
 
         indels = {}
