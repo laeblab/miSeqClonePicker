@@ -200,7 +200,9 @@ def _read_xlsx_columns(filename: str) -> XLSXTable:
                 cells = []
 
                 for row in range(sheet.nrows):
-                    cells.append(sheet.cell(row, column).value)
+                    value = sheet.cell(row, column).value
+
+                    cells.append(common.xlsx_strip(value))
 
                 table.append(cells)
 

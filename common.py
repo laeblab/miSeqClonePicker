@@ -45,3 +45,18 @@ def wx_find(key: Union[str, int]) -> Any:
         raise KeyError(f'Could not find widget with key {key!r}')
 
     return widget
+
+
+def xlsx_strip(value):
+    if isinstance(value, str):
+        value = list(value)
+        while value and (value[-1].isspace() or not value[-1].isprintable()):
+            value.pop()
+
+        value.reverse()
+        while value and (value[-1].isspace() or not value[-1].isprintable()):
+            value.pop()
+
+        value = ''.join(value[::-1])
+
+    return value

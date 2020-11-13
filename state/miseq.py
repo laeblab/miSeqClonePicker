@@ -6,6 +6,8 @@ from mypy_extensions import TypedDict
 
 import xlrd
 
+from common import xlsx_strip
+
 
 class MiSeqOutputError(Exception):
     pass
@@ -41,7 +43,7 @@ def load(filename: str) -> MiSeqOutput:
     knockouts = {}  # type: MiSeqOutput
     with xlrd.open_workbook(filename) as workbook:
         def _read_row(row: int) -> List[Any]:
-            return [sheet.cell(row, column).value
+            return [xlsx_strip(sheet.cell(row, column).value)
                     for column in range(sheet.ncols)]
 
         for sheet in workbook.sheets():

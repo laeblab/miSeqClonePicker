@@ -10,6 +10,7 @@ from .types import \
     SampleSheetColumn, \
     column_label
 
+from common import xlsx_strip
 
 _PEAK_RE = re.compile(r'^peak([0-9]+)$', re.I)
 _PEAK_INDEL = re.compile(r'(-?[0-9]+)( \(inframe\))?')
@@ -19,7 +20,7 @@ def load_miseq_table(filename: str) -> MiSeqOutput:
     knockouts = {}  # type: MiSeqOutput
     with xlrd.open_workbook(filename) as workbook:
         def _read_row(row: int) -> List[Any]:
-            return [sheet.cell(row, column).value
+            return [xlsx_strip(sheet.cell(row, column).value)
                     for column in range(sheet.ncols)]
 
         for sheet in workbook.sheets():
@@ -126,7 +127,7 @@ def _read_xlsx_columns(filename: str) -> XLSXTable:
                 cells = []
 
                 for row in range(sheet.nrows):
-                    cells.append(sheet.cell(row, column).value)
+                    cells.append(xlsx_strip(sheet.cell(row, column).value))
 
                 table.append(cells)
 
