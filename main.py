@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import sys
 
+from pathlib import Path
 from typing import Any, List, Optional
 
 import wx
@@ -148,16 +150,39 @@ class MyApp(wx.App):
         self.refresh_ui()
 
 
-def main(_argv: List[str]) -> int:
+
+class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("width", 79)
+
+        super().__init__(*args, **kwargs)
+
+
+def parse_args(argv):
+    parser = argparse.ArgumentParser(formatter_class=HelpFormatter)
+    parser.add_argument("--pooling-xlsx", type=Path)
+    parser.add_argument("--hamplicons-xlsx", type=Path)
+    parser.add_argument("--state-core", type=Path)
+
+    return parser.parse_args(argv)
+
+
+def main(argv: List[str]) -> int:
+    args = parse_args(argv)
     app = MyApp(False)
 
-    # app.state.samplesheet_load('misc/Samplesheet.xlsx')
-    # app.state.miseq_load('misc/output.xlsx')
-    # app.state.load_state('Untitled.core')
+    if args.pooling_xlsx:
+        app.state.samplesheet_load(args.pooling_xlsx)
+
+    if args.hamplicons_xlsx:
+        app.state.miseq_load(args.hamplicons_xlsx)
+
+    if args.state_core:
+        app.state.load_state(args.state_core)
+
     app.refresh_ui()
 
     return app.MainLoop()
-
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
