@@ -1,6 +1,10 @@
 import copy
+import json
+import os
 import re
-from typing import Any, Dict, List, Optional
+
+
+from typing import Any, Dict, List
 
 from mypy_extensions import TypedDict
 
@@ -45,7 +49,17 @@ Column = Dict[int, Result]
 MiSeqOutput = Dict[str, Column]
 
 
-def load(filename: str) -> MiSeqOutput:
+def load(filename):
+    _, ext = os.path.splitext(filename)
+    if ext.lower() == ".json":
+        return load_json(filename)
+    elif ext.lower() == ".xlsx":
+        return load_xlsx(filename)
+
+    raise NotImplementedError("Unsupported extension '{}'".format(ext))
+
+
+def load_xlsx(filename: str) -> MiSeqOutput:
     knockouts = {}  # type: MiSeqOutput
     with xlrd.open_workbook(filename) as workbook:
 
@@ -92,8 +106,6 @@ def load(filename: str) -> MiSeqOutput:
                             }
                         )
 
-                result["peaks"].sort(key=lambda peak: peak["pct"], reverse=True)
-
                 if any(peak["inframe"] for peak in result["peaks"]):
                     result["comment"] = "(inframe)"
 
@@ -101,6 +113,45 @@ def load(filename: str) -> MiSeqOutput:
 
                 column = knockouts.setdefault(knockout, {})
                 column[int(values["Index/Well"])] = result
+
+    return knockouts
+
+
+def load_json(filename: str) -> MiSeqOutput:
+    knockouts = {}  # type: MiSeqOutput
+
+    with open(filename, "rt") as handle:
+        data = json.load(handle)
+
+    for sample_name, sample in data["samples"].items():
+        for target_name, stats in sample["targets"].items():
+            result = {
+                "target": target_name,
+                "index": int(sample_name),
+                "reads": int(stats["reads"]),
+                "wt": int(stats["reads_wildtype"]),
+                "indel": int(stats["reads_mutant"]),
+                "picked": False,
+                "peaks": [],
+                "comment": "",
+            }  # type: Result
+
+            for peak, count in stats["peaks"].items():
+                result["peaks"].append(
+                    {
+                        "indel": int(peak),
+                        "inframe": abs(int(peak)) % 3 == 0,
+                        "pct": (100 * count) / int(stats["reads"]),
+                    }
+                )
+
+            if any(peak["inframe"] for peak in result["peaks"]):
+                result["comment"] = "In-frame"
+
+            result["peaks"].sort(key=lambda peak: peak["pct"], reverse=True)
+
+            column = knockouts.setdefault(target_name, {})
+            column[int(sample_name)] = result
 
     return knockouts
 

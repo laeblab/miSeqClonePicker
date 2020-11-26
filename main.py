@@ -112,8 +112,8 @@ class MyApp(wx.App):
     def load_miseq_output(self) -> None:
         with wx.FileDialog(
             self.frame,
-            "Open SampleSheet",
-            wildcard="SampleSheet|*.xlsx",
+            "Open Hamplicon Output",
+            wildcard="Hamplicons|*.xlsx;*.json",
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
             defaultDir=self.default_dir,
         ) as widget:
