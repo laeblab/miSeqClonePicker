@@ -17,6 +17,12 @@ class MiSeqOutputError(Exception):
     pass
 
 
+# minimum number of reads a specific target variation must have
+TARGET_LOCAL_THRESHOLD_READS = 10
+# minimum percentage of reads observed with a specific indel to be reported
+TARGET_LOCAL_THRESHOLD_PERCENTAGE = 0.05
+
+
 _PEAK_RE = re.compile(r"^peak([0-9]+)$", re.I)
 _PEAK_INDEL = re.compile(r"(-?[0-9]+)( \(inframe\))?")
 
@@ -137,11 +143,17 @@ def load_json(filename: str) -> MiSeqOutput:
             }  # type: Result
 
             for peak, count in stats["peaks"].items():
+                pct = count / int(stats["reads"])
+                if pct < TARGET_LOCAL_THRESHOLD_PERCENTAGE:
+                    continue
+                elif count < TARGET_LOCAL_THRESHOLD_READS:
+                    continue
+
                 result["peaks"].append(
                     {
                         "indel": int(peak),
                         "inframe": abs(int(peak)) % 3 == 0,
-                        "pct": (100 * count) / int(stats["reads"]),
+                        "pct": pct,
                     }
                 )
 
