@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+
 import wx
 import wx.propgrid
 
@@ -133,14 +135,17 @@ class ClonesWidget(object):
                         self._root.refresh_ui()
 
     def export_clones(self, everything: bool = False):
+        app = wx.GetApp()
         with wx.FileDialog(
             self._root.frame,
             "Export clones",
             wildcard="Spreadsheet|*.xlsx",
             style=wx.FD_SAVE,
+            defaultDir=app.default_dir,
         ) as widget:
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
+                app.default_dir = os.path.dirname(filename)
 
                 try:
                     self._state.export(filename, everything=everything)

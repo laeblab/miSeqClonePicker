@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+
 from typing import Any, Iterable, Tuple
 
 import wx
@@ -77,15 +79,17 @@ class SampleSheetWidget(object):
             self._root.refresh_ui()
 
     def OnLoadButton(self, _event: Any) -> None:
+        app = wx.GetApp()
         with wx.FileDialog(
             self.grid,
             "Open SampleSheet",
             wildcard="SampleSheet|*.xlsx",
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+            defaultDir=app.default_dir,
         ) as widget:
-
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
+                app.default_dir = os.path.dirname(filename)
 
                 try:
                     self._state.samplesheet_load(filename)

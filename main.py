@@ -57,6 +57,7 @@ class MyApp(wx.App):
         self.ko_mapping = ui.KOMappingWidget(self, self.state)
         self.miseq_output = ui.MiSeqOutputWidget(self, self.state)
         self.clones = ui.ClonesWidget(self, self.state)
+        self.default_dir = ""
 
         for widget in self.undo_buttons:
             widget.Bind(wx.EVT_BUTTON, self.OnUndoButton)
@@ -114,10 +115,12 @@ class MyApp(wx.App):
             "Open SampleSheet",
             wildcard="SampleSheet|*.xlsx",
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+            defaultDir=self.default_dir,
         ) as widget:
 
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
+                self.default_dir = os.path.dirname(filename)
 
                 try:
                     self.state.miseq_load(filename)
@@ -132,9 +135,11 @@ class MyApp(wx.App):
             "Open project",
             wildcard="Project|*.core",
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+            defaultDir=self.default_dir,
         ) as widget:
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
+                self.default_dir = os.path.dirname(filename)
 
                 try:
                     self.state.load_state(filename)
@@ -146,10 +151,15 @@ class MyApp(wx.App):
 
     def save_state(self, *_args: Any, **_kwargs: Any) -> None:
         with wx.FileDialog(
-            self.frame, "Save project", wildcard="Project|*.core", style=wx.FD_SAVE
+            self.frame,
+            "Save project",
+            wildcard="Project|*.core",
+            style=wx.FD_SAVE,
+            defaultDir=self.default_dir,
         ) as widget:
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
+                self.default_dir = os.path.dirname(filename)
 
                 try:
                     self.state.save_state(filename)
