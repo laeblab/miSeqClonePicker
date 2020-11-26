@@ -25,34 +25,42 @@ from .load import load_samplesheet
 
 class Group:
     __slots__ = [
-        'label',
-        'columns',
-        'clones',
-        'parent',
+        "label",
+        "columns",
+        "clones",
+        "parent",
     ]
 
-    def __init__(self, label: str, columns: List[SampleSheetColumn], parent: Optional['Group'] = None) -> None:
+    def __init__(
+        self,
+        label: str,
+        columns: List[SampleSheetColumn],
+        parent: Optional["Group"] = None,
+    ) -> None:
         self.label = label
         self.columns = columns
         self.clones = None  # type: Optional[List[Clone]]
         self.parent = parent
 
         if parent and len(columns) != 1:
-            raise ValueError('Split group %r must contain exactly one column'
-                             % (label,))
+            raise ValueError(
+                "Split group %r must contain exactly one column" % (label,)
+            )
 
-        clone_counts = set(len(column['cells']) for column in columns)
+        clone_counts = set(len(column["cells"]) for column in columns)
         # Empty columns are allowed in a group
         if len(clone_counts - set((0,))) <= 1:
             # Create named clones from first non-empty column
             self.clones = []
             for column in columns:
-                if column['cells']:
-                    for idx, row in enumerate(column['cells']):
-                        self.clones.append({
-                            'label': str(row) if parent else clone_label(idx),
-                            'knockouts': {},
-                        })
+                if column["cells"]:
+                    for idx, row in enumerate(column["cells"]):
+                        self.clones.append(
+                            {
+                                "label": str(row) if parent else clone_label(idx),
+                                "knockouts": {},
+                            }
+                        )
 
                     break
 
@@ -62,13 +70,13 @@ class Group:
     def update_mapping(self) -> None:
         if self.clones is not None:
             for column in self.columns:
-                miseq = column['miseq']
-                key = column['meta']['knockout']
+                miseq = column["miseq"]
+                key = column["meta"]["knockout"]
 
                 assert not miseq or len(self.clones) == len(miseq)
-                assert len(column['cells']) in (0, len(self.clones))
-                for cell, clone in zip(column['cells'], self.clones):
-                    knockouts = clone['knockouts']
+                assert len(column["cells"]) in (0, len(self.clones))
+                for cell, clone in zip(column["cells"], self.clones):
+                    knockouts = clone["knockouts"]
                     knockouts[key] = miseq[cell] if miseq is not None else None
 
     def is_valid(self) -> bool:
@@ -77,11 +85,13 @@ class Group:
     def is_split(self) -> bool:
         return self.parent is not None
 
-    def split(self) -> List['Group']:
-        split_groups = []   # type: List[Group]
+    def split(self) -> List["Group"]:
+        split_groups = []  # type: List[Group]
         for column in self.columns:
-            label = '[%s] %s' % (column_label(column['index']),
-                                 column['meta']['knockout'])
+            label = "[%s] %s" % (
+                column_label(column["index"]),
+                column["meta"]["knockout"],
+            )
             split_groups.append(Group(label, [column], self))
 
         return split_groups
@@ -89,10 +99,10 @@ class Group:
 
 class State:
     __slots__ = [
-        'columns',
-        'groups',
-        'grouped_by',
-        'miseq',
+        "columns",
+        "groups",
+        "grouped_by",
+        "miseq",
     ]
 
     def __init__(self) -> None:
@@ -104,7 +114,7 @@ class State:
         self.columns = load_samplesheet(filename)
         self.groups = []
         self.grouped_by = None
-        self.group_by('extraction')
+        self.group_by("extraction")
 
     def load_miseq_table(self, filename: str) -> None:
         # TODO
@@ -112,17 +122,19 @@ class State:
 
     def reset_mapping(self) -> None:
         for column in self.columns:
-            column['miseq'] = None
+            column["miseq"] = None
 
         for group in self.groups:
             group.update_mapping()
 
     def group_by(self, key: str) -> None:
         if key != self.grouped_by:
-            column_groups = collections.OrderedDict()  # type: Dict[str, List[SampleSheetColumn]]
+            column_groups = (
+                collections.OrderedDict()
+            )  # type: Dict[str, List[SampleSheetColumn]]
 
             for column in self.columns:
-                value = column['meta'][key]
+                value = column["meta"][key]
                 column_group = column_groups.setdefault(value, [])
                 column_group.append(column)
 
@@ -167,10 +179,10 @@ class State:
         updated_columns = []
         for column in self.columns:
             if column is target:
-                column['miseq'] = miseq
+                column["miseq"] = miseq
                 updated_columns.append(column)
-            elif column['miseq'] is miseq:
-                column['miseq'] = None
+            elif column["miseq"] is miseq:
+                column["miseq"] = None
                 updated_columns.append(column)
 
         for group in self.groups:

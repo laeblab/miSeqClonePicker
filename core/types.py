@@ -8,41 +8,49 @@ class StateError(Exception):
     pass
 
 
-MiSeqPeak = TypedDict('MiSeqPeak', {
-    'indel': int,
-    'inframe': bool,
-    'pct': float,
-})
+MiSeqPeak = TypedDict(
+    "MiSeqPeak",
+    {
+        "indel": int,
+        "inframe": bool,
+        "pct": float,
+    },
+)
 
 
-MiSeqResult = TypedDict('MiSeqResult', {
-    'index': int,
-    'reads': int,
-    'wt': int,
-    'indel': int,
-    'picked': bool,
-    'peaks': List[MiSeqPeak],
-    'comment': str,
-    'target': str,
-})
+MiSeqResult = TypedDict(
+    "MiSeqResult",
+    {
+        "index": int,
+        "reads": int,
+        "wt": int,
+        "indel": int,
+        "picked": bool,
+        "peaks": List[MiSeqPeak],
+        "comment": str,
+        "target": str,
+    },
+)
 
 
 MiSeqColumn = Dict[int, MiSeqResult]
 MiSeqOutput = Dict[str, MiSeqColumn]
 
 
-SampleSheetColumn = TypedDict('SampleSheetColumn', {
-    'index': int,
-    'meta': Dict[str, str],
-    'cells': List[int],
-    'miseq': MiSeqColumn,
-})
+SampleSheetColumn = TypedDict(
+    "SampleSheetColumn",
+    {
+        "index": int,
+        "meta": Dict[str, str],
+        "cells": List[int],
+        "miseq": MiSeqColumn,
+    },
+)
 
 
-Clone = TypedDict('Clone', {
-    'label': str,
-    'knockouts': Dict[str, Optional[MiSeqResult]]
-})
+Clone = TypedDict(
+    "Clone", {"label": str, "knockouts": Dict[str, Optional[MiSeqResult]]}
+)
 
 
 # FIXME
@@ -53,7 +61,7 @@ def column_label(number: int) -> str:
         number, remainder = divmod(number - 1, 26)
         label.append(chr(65 + remainder))
 
-    return ''.join(label[::-1])
+    return "".join(label[::-1])
 
 
 # FIXME

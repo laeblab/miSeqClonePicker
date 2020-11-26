@@ -12,7 +12,7 @@ def column_label(number: int) -> str:
         number, remainder = divmod(number - 1, 26)
         label.append(chr(65 + remainder))
 
-    return ''.join(label[::-1])
+    return "".join(label[::-1])
 
 
 def clone_label(number: int) -> str:
@@ -39,10 +39,10 @@ def wx_find(key: Union[str, int]) -> Any:
     elif isinstance(key, int):
         widget = wx.FindWindowById(key)
     else:
-        raise ValueError(f'Invalid widget key {key!r}')
+        raise ValueError(f"Invalid widget key {key!r}")
 
     if not widget:
-        raise KeyError(f'Could not find widget with key {key!r}')
+        raise KeyError(f"Could not find widget with key {key!r}")
 
     return widget
 
@@ -57,6 +57,6 @@ def xlsx_strip(value):
         while value and (value[-1].isspace() or not value[-1].isprintable()):
             value.pop()
 
-        value = ''.join(value[::-1])
+        value = "".join(value[::-1])
 
     return value

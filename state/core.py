@@ -11,12 +11,15 @@ import state.miseq as miseq
 from common import label_to_key
 
 
-_Snapshot = TypedDict('_Snapshot', {
-    'samplesheet': samplesheet.SampleSheet,
-    'miseq': miseq.MiSeqOutput,
-    'ko_mapping': Dict[str, Optional[str]],
-    'default_ko_mapping': Dict[str, Optional[str]],
-})
+_Snapshot = TypedDict(
+    "_Snapshot",
+    {
+        "samplesheet": samplesheet.SampleSheet,
+        "miseq": miseq.MiSeqOutput,
+        "ko_mapping": Dict[str, Optional[str]],
+        "default_ko_mapping": Dict[str, Optional[str]],
+    },
+)
 
 
 _SnapshotList = List[_Snapshot]
@@ -25,21 +28,24 @@ _SnapshotList = List[_Snapshot]
 KOMapping = Dict[str, Optional[str]]
 
 
-Clone = TypedDict('Clone', {
-    'label': str,
-    'comment': Optional[str],
-    'knockouts': Dict[str, Optional[miseq.Result]],
-})
+Clone = TypedDict(
+    "Clone",
+    {
+        "label": str,
+        "comment": Optional[str],
+        "knockouts": Dict[str, Optional[miseq.Result]],
+    },
+)
 
 
 class State:
     def __init__(self) -> None:
         self.samplesheet = {
-            'knockouts': [],
-            'headers': [],
-            'width': 0,
-            'height': 0,
-            'group_by': 'id',
+            "knockouts": [],
+            "headers": [],
+            "width": 0,
+            "height": 0,
+            "group_by": "id",
         }  # type: samplesheet.SampleSheet
 
         self.miseq = {}  # type: miseq.MiSeqOutput
@@ -68,9 +74,9 @@ class State:
 
     def samplesheet_user_split(self, group: str, value: bool) -> None:
         state = self._store_state()
-        self.samplesheet = samplesheet.set_user_split(self.samplesheet,
-                                                      group=group,
-                                                      value=value)
+        self.samplesheet = samplesheet.set_user_split(
+            self.samplesheet, group=group, value=value
+        )
         self._append_undo_history(state)
 
     def samplesheet_group_by(self, key: str) -> None:
@@ -79,8 +85,12 @@ class State:
         self._append_undo_history(state)
 
     def samplesheet_target_names(self) -> List[str]:
-        return sorted({knockout['headers']['knockout']
-                       for knockout in self.samplesheet['knockouts']})
+        return sorted(
+            {
+                knockout["headers"]["knockout"]
+                for knockout in self.samplesheet["knockouts"]
+            }
+        )
 
     def samplesheet_column(self, knockout: str) -> List[Optional[str]]:
         for key, value in self.ko_mapping.items():
@@ -107,11 +117,13 @@ class State:
         state = self._store_state()
 
         any_picked = False
-        for ko in clone['knockouts'].values():
-            any_picked |= miseq.is_picked(self.miseq, ko['target'], ko['index'])
+        for ko in clone["knockouts"].values():
+            any_picked |= miseq.is_picked(self.miseq, ko["target"], ko["index"])
 
-        for ko in clone['knockouts'].values():
-            self.miseq = miseq.set_picked(self.miseq, ko['target'], ko['index'], not any_picked)
+        for ko in clone["knockouts"].values():
+            self.miseq = miseq.set_picked(
+                self.miseq, ko["target"], ko["index"], not any_picked
+            )
 
         self._append_undo_history(state)
 
@@ -138,25 +150,24 @@ class State:
         clones = {}  # type: Dict[str, Clone]
 
         for knockout in samplesheet.get_group(self.samplesheet, group):
-            ss_target = knockout['headers']['knockout']
+            ss_target = knockout["headers"]["knockout"]
             ms_target = self.ko_mapping[ss_target]
 
             miseq = {} if ms_target is None else self.miseq[ms_target]
-            for index, key in enumerate(knockout['column'], start=1):
+            for index, key in enumerate(knockout["column"], start=1):
                 if key is not None:
                     try:
                         clone = clones[key]
                     except KeyError:
                         clone = clones[key] = {
-                            'label': key,
-                            'comment': None,
-                            'knockouts': {},
+                            "label": key,
+                            "comment": None,
+                            "knockouts": {},
                         }
 
-                    clone['knockouts'][ss_target] = miseq.get(index)
+                    clone["knockouts"][ss_target] = miseq.get(index)
 
-        return sorted(clones.values(),
-                      key=lambda clone: label_to_key(clone['label']))
+        return sorted(clones.values(), key=lambda clone: label_to_key(clone["label"]))
 
     @property
     def redo_count(self) -> int:
@@ -166,17 +177,30 @@ class State:
     def undo_count(self) -> int:
         return len(self._undo_history)
 
-    def export(self, filename: str, everything: bool=False) -> None:
+    def export(self, filename: str, everything: bool = False) -> None:
         workbook = openpyxl.Workbook()
         sheet = workbook.active
 
-        bd_fat_bottom = openpyxl.styles.borders.Border(bottom=openpyxl.styles.borders.Side('medium'))
-        bd_thin_bottom = openpyxl.styles.borders.Border(bottom=openpyxl.styles.borders.Side('thin'))
-        grey_font = openpyxl.styles.Font(color='FFB7B7B7')
+        bd_fat_bottom = openpyxl.styles.borders.Border(
+            bottom=openpyxl.styles.borders.Side("medium")
+        )
+        bd_thin_bottom = openpyxl.styles.borders.Border(
+            bottom=openpyxl.styles.borders.Side("thin")
+        )
+        grey_font = openpyxl.styles.Font(color="FFB7B7B7")
         blue_back = openpyxl.styles.PatternFill("solid", fgColor="D3E8EE")
 
-        headers = ('Group', 'Clone', 'KOs', 'Index', 'Reads', 'Indels', '%',
-                   '%Total', 'Comment')
+        headers = (
+            "Group",
+            "Clone",
+            "KOs",
+            "Index",
+            "Reads",
+            "Indels",
+            "%",
+            "%Total",
+            "Comment",
+        )
         sheet.append(headers)
         for column, _ in enumerate(headers, start=1):
             sheet.cell(row=1, column=column).border = bd_fat_bottom
@@ -185,9 +209,11 @@ class State:
         for group, is_split in self.clones_groups():
             clones = self.clones_get_group(group)
             if not (is_split or everything):
-                clones = [clone for clone in clones
-                          if any(ko and ko['picked']
-                                 for ko in clone['knockouts'].values())]
+                clones = [
+                    clone
+                    for clone in clones
+                    if any(ko and ko["picked"] for ko in clone["knockouts"].values())
+                ]
 
             if not clones:
                 continue
@@ -201,10 +227,10 @@ class State:
                     for column in range(1, len(headers) + 1):
                         sheet.cell(row=last_row, column=column).border = bd_thin_bottom
 
-                for key, knockout in sorted(clone['knockouts'].items()):
+                for key, knockout in sorted(clone["knockouts"].items()):
                     row = [
                         group if first_row else None,
-                        clone['label'] if first_row else None,
+                        clone["label"] if first_row else None,
                         key,
                     ]  # type: List[Any]
 
@@ -212,39 +238,45 @@ class State:
                         indels = []
                         indels_pct = []
                         indel_pct_total = 0.0
-                        for peak in sorted(knockout['peaks'],
-                                           key=lambda peak: peak['pct'],
-                                           reverse=True):
-                            indels.append('%+i' % (peak['indel'],))
-                            indels_pct.append('%i' % (peak['pct'] * 100,))
-                            indel_pct_total += peak['pct'] * 100
+                        for peak in sorted(
+                            knockout["peaks"],
+                            key=lambda peak: peak["pct"],
+                            reverse=True,
+                        ):
+                            indels.append("%+i" % (peak["indel"],))
+                            indels_pct.append("%i" % (peak["pct"] * 100,))
+                            indel_pct_total += peak["pct"] * 100
 
-                        row.extend((
-                            int(knockout['index']),
-                            knockout['reads'],
-                            ' / '.join(indels),
-                            ' / '.join(indels_pct),
-                            '%i' % (indel_pct_total,),
-                            knockout['comment'],
-                        ))
+                        row.extend(
+                            (
+                                int(knockout["index"]),
+                                knockout["reads"],
+                                " / ".join(indels),
+                                " / ".join(indels_pct),
+                                "%i" % (indel_pct_total,),
+                                knockout["comment"],
+                            )
+                        )
                     else:
-                        row.extend((
-                            '<NA>',
-                            '',
-                            '',
-                            '',
-                            '',
-                            'Insufficient data',
-                        ))
+                        row.extend(
+                            (
+                                "<NA>",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "Insufficient data",
+                            )
+                        )
 
                     sheet.append(row)
                     first_row = False
                     last_row += 1
 
-                    if not (knockout and (is_split or knockout['picked'])):
+                    if not (knockout and (is_split or knockout["picked"])):
                         for column in range(3, len(headers) + 1):
                             sheet.cell(row=last_row, column=column).font = grey_font
-                    elif knockout['comment'].lower() in ('wt', 'wildtype'):
+                    elif knockout["comment"].lower() in ("wt", "wildtype"):
                         for column in range(1, len(headers) + 1):
                             sheet.cell(row=last_row, column=column).fill = blue_back
 
@@ -254,7 +286,7 @@ class State:
         workbook.save(filename)
 
     def load_state(self, filename: str) -> None:
-        with open(filename, 'rb') as handle:
+        with open(filename, "rb") as handle:
             state = self._store_state()
             self._replace_state(pickle.loads(handle.read()))
             self._append_undo_history(state)
@@ -262,7 +294,7 @@ class State:
 
     def save_state(self, filename: str) -> None:
         state = self._store_state()
-        with open(filename, 'wb') as handle:
+        with open(filename, "wb") as handle:
             handle.write(pickle.dumps(state))
         self._saved_state = state
 
@@ -271,10 +303,10 @@ class State:
 
     def _store_state(self) -> _Snapshot:
         return {
-            'samplesheet': self.samplesheet,
-            'miseq': self.miseq,
-            'ko_mapping': self.ko_mapping,
-            'default_ko_mapping': self.default_ko_mapping,
+            "samplesheet": self.samplesheet,
+            "miseq": self.miseq,
+            "ko_mapping": self.ko_mapping,
+            "default_ko_mapping": self.default_ko_mapping,
         }
 
     def _append_undo_history(self, state: _Snapshot) -> None:
@@ -297,9 +329,9 @@ class State:
                 continue
 
             # Partial/case-insensitive matching
-            mangled_target_key = target_key.lower().replace(' ', '_')
+            mangled_target_key = target_key.lower().replace(" ", "_")
             for miseq_key in miseq_targets:
-                mangled_miseq_key = miseq_key.lower().replace(' ', '_')
+                mangled_miseq_key = miseq_key.lower().replace(" ", "_")
 
                 if mangled_target_key.startswith(mangled_miseq_key):
                     candidates.append((target_key, miseq_key))
@@ -314,7 +346,10 @@ class State:
         default_ko_mapping = {}
         used_miseq_keys = set()
         for target_key, miseq_key in candidates:
-            if target_key not in default_ko_mapping and miseq_key not in used_miseq_keys:
+            if (
+                target_key not in default_ko_mapping
+                and miseq_key not in used_miseq_keys
+            ):
                 default_ko_mapping[target_key] = miseq_key
                 used_miseq_keys.add(miseq_key)
 

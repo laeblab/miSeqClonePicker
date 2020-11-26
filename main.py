@@ -8,6 +8,7 @@ from typing import Any, List, Optional
 
 import wx
 import wx.xrc
+
 # Explicit import of wx.grid required to register widget for XRC
 import wx.grid
 import wx.propgrid
@@ -18,15 +19,17 @@ import state
 
 class PropGridXMLHandler(wx.xrc.XmlResourceHandler):
     def CanHandle(self, node):
-        return self.IsOfClass(node, 'wxPropertyGridManager')
+        return self.IsOfClass(node, "wxPropertyGridManager")
 
     def DoCreateResource(self):
         assert self.GetInstance() is None
-        widget = wx.propgrid.PropertyGrid(self.GetParentAsWindow(),
-                                          self.GetID(),
-                                          self.GetPosition(),
-                                          self.GetSize(),
-                                          self.GetStyle())
+        widget = wx.propgrid.PropertyGrid(
+            self.GetParentAsWindow(),
+            self.GetID(),
+            self.GetPosition(),
+            self.GetSize(),
+            self.GetStyle(),
+        )
         widget.SetName(self.GetName())
         self.SetupWindow(widget)
         return widget
@@ -40,10 +43,10 @@ class MyApp(wx.App):
         resources = wx.xrc.XmlResource()
         resources.AddHandler(PropGridXMLHandler())
 
-        xrc_filepath = os.path.join(os.path.dirname(__file__), 'ui.xrc')
+        xrc_filepath = os.path.join(os.path.dirname(__file__), "ui.xrc")
         resources.Load(xrc_filepath)
 
-        self.frame = resources.LoadFrame(None, 'frame')
+        self.frame = resources.LoadFrame(None, "frame")
         self.frame.SetInitialSize(wx.Size(1024, 768))
         self.frame.Show()
 
@@ -67,9 +70,14 @@ class MyApp(wx.App):
 
     def OnClose(self, event: Any) -> None:
         if event.CanVeto() and not self.state.is_saved():
-            if wx.MessageBox("Unsaved changes exist, close program anyway?",
-                             "Please confirm",
-                             wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
+            if (
+                wx.MessageBox(
+                    "Unsaved changes exist, close program anyway?",
+                    "Please confirm",
+                    wx.ICON_QUESTION | wx.YES_NO,
+                )
+                != wx.YES
+            ):
                 event.Veto()
                 return
 
@@ -90,18 +98,23 @@ class MyApp(wx.App):
         if child is self.ko_mapping:
             self.samplesheet.refresh_ui()
 
-        history_buttons = (('Undo', self.undo_buttons, self.state.undo_count),
-                           ('Redo', self.redo_buttons, self.state.redo_count))
+        history_buttons = (
+            ("Undo", self.undo_buttons, self.state.undo_count),
+            ("Redo", self.redo_buttons, self.state.redo_count),
+        )
 
         for text, widgets, count in history_buttons:
             for widget in widgets:
                 widget.Enable(bool(count))
-                widget.SetLabel(f'{text} ({count})' if count else text)
+                widget.SetLabel(f"{text} ({count})" if count else text)
 
     def load_miseq_output(self) -> None:
-        with wx.FileDialog(self.frame, "Open SampleSheet",
-                           wildcard="SampleSheet|*.xlsx",
-                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as widget:
+        with wx.FileDialog(
+            self.frame,
+            "Open SampleSheet",
+            wildcard="SampleSheet|*.xlsx",
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+        ) as widget:
 
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
@@ -114,9 +127,12 @@ class MyApp(wx.App):
                 self.refresh_ui()
 
     def load_state(self, *_args: Any, **_kwargs: Any) -> None:
-        with wx.FileDialog(self.frame, "Open project",
-                           wildcard="Project|*.core",
-                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as widget:
+        with wx.FileDialog(
+            self.frame,
+            "Open project",
+            wildcard="Project|*.core",
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+        ) as widget:
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
 
@@ -129,9 +145,9 @@ class MyApp(wx.App):
                 self.refresh_ui()
 
     def save_state(self, *_args: Any, **_kwargs: Any) -> None:
-        with wx.FileDialog(self.frame, "Save project",
-                           wildcard="Project|*.core",
-                           style=wx.FD_SAVE) as widget:
+        with wx.FileDialog(
+            self.frame, "Save project", wildcard="Project|*.core", style=wx.FD_SAVE
+        ) as widget:
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
 
@@ -148,7 +164,6 @@ class MyApp(wx.App):
     def OnRedoButton(self, _event: Any) -> None:
         self.state.redo()
         self.refresh_ui()
-
 
 
 class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
@@ -184,5 +199,6 @@ def main(argv: List[str]) -> int:
 
     return app.MainLoop()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

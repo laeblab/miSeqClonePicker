@@ -8,27 +8,27 @@ from state import State
 
 
 class KOMappingWidget(object):
-    def __init__(self, root: 'wx.App', state: State) -> None:
+    def __init__(self, root: "wx.App", state: State) -> None:
         self._root = root
         self._state = state
         self._updating_lists = False
 
-        wx_bind('mapping_load', wx.EVT_BUTTON, self.OnLoadButton)
+        wx_bind("mapping_load", wx.EVT_BUTTON, self.OnLoadButton)
 
-        root.undo_buttons.append(wx_find('mapping_button_undo'))
-        root.redo_buttons.append(wx_find('mapping_button_redo'))
+        root.undo_buttons.append(wx_find("mapping_button_undo"))
+        root.redo_buttons.append(wx_find("mapping_button_redo"))
 
-        self.ss_list = wx_find('mapping_current')
+        self.ss_list = wx_find("mapping_current")
         self.ss_list.ClearAll()
-        self.ss_list.AppendColumn('SampleSheet targets')
-        self.ss_list.AppendColumn('miSeq targets')
+        self.ss_list.AppendColumn("SampleSheet targets")
+        self.ss_list.AppendColumn("miSeq targets")
         # FIXME: Workaround for dark theme being applied
         self.ss_list.SetForegroundColour(wx.Colour(35, 35, 35))
 
-        self.miseq_list = wx_find('mapping_miseq')
+        self.miseq_list = wx_find("mapping_miseq")
         self.miseq_list.ClearAll()
-        self.miseq_list.AppendColumn('miSeq targets')
-        self.miseq_list.AppendColumn('SampleSheet targets')
+        self.miseq_list.AppendColumn("miSeq targets")
+        self.miseq_list.AppendColumn("SampleSheet targets")
         # FIXME: Workaround for dark theme being applied
         self.miseq_list.SetForegroundColour(wx.Colour(35, 35, 35))
 
@@ -45,24 +45,25 @@ class KOMappingWidget(object):
         self._refresh_colors(self.ss_list, ss_mapping_default)
 
         miseq_targets = self._state.miseq_target_names()
-        miseq_mapping = {value: key for key, value in ss_mapping.items()
-                         if value is not None}
-        default_miseq_mapping = {value: key
-                                 for key, value in ss_mapping_default.items()
-                                 if value is not None}
+        miseq_mapping = {
+            value: key for key, value in ss_mapping.items() if value is not None
+        }
+        default_miseq_mapping = {
+            value: key for key, value in ss_mapping_default.items() if value is not None
+        }
         self._build_list(self.miseq_list, miseq_targets, miseq_mapping)
         self._refresh_colors(self.miseq_list, default_miseq_mapping)
 
     def _build_list(self, widget: Any, targets: List[str], mapping: Any) -> None:
         while widget.GetItemCount() < len(targets):
-            widget.Append(['', ''])
+            widget.Append(["", ""])
 
         while widget.GetItemCount() > len(targets):
             widget.DeleteItem(widget.GetItemCount() - 1)
 
         for idx, value in enumerate(sorted(targets, key=str.lower)):
             widget.SetItem(idx, 0, value)
-            widget.SetItem(idx, 1, mapping.get(value) or '')
+            widget.SetItem(idx, 1, mapping.get(value) or "")
 
         for column in range(widget.GetColumnCount()):
             widget.SetColumnWidth(column, wx.LIST_AUTOSIZE)
@@ -71,7 +72,7 @@ class KOMappingWidget(object):
         for row_idx in range(widget.GetItemCount()):
             key = widget.GetItemText(row_idx, 0)
             current_value = widget.GetItemText(row_idx, 1)
-            default_value = default_mapping.get(key) or ''
+            default_value = default_mapping.get(key) or ""
 
             if not current_value:
                 colour = wx.RED

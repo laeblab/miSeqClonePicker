@@ -4,18 +4,21 @@ from mypy_extensions import TypedDict
 from .samplesheet import SampleSheet
 
 
-_Snapshot = TypedDict('_Snapshot', {
-    '_sheet': SampleSheet,
-})
+_Snapshot = TypedDict(
+    "_Snapshot",
+    {
+        "_sheet": SampleSheet,
+    },
+)
 
 _History = List[_Snapshot]
 
 
 class Core:
     __slots__ = [
-        '_undo_history',
-        '_redo_history',
-        '_sheet',
+        "_undo_history",
+        "_redo_history",
+        "_sheet",
     ]
 
     def __init__(self) -> None:
@@ -60,23 +63,23 @@ class Core:
     def export_report(self, filename: str) -> None:
         raise NotImplementedError()
 
-    def _create_snapshot(self) -> '_CreateSnapshot':
+    def _create_snapshot(self) -> "_CreateSnapshot":
         return _CreateSnapshot(self)
 
 
 class _CreateSnapshot:
     __slots__ = [
-        '_core',
-        '_snapshot',
+        "_core",
+        "_snapshot",
     ]
 
     def __init__(self, core: Core) -> None:
         self._core = core
         self._snapshot = None  # type: Optional[_Snapshot]
 
-    def __enter__(self) -> '_CreateSnapshot':
+    def __enter__(self) -> "_CreateSnapshot":
         self._snapshot = {
-            '_sheet': self._core._sheet,
+            "_sheet": self._core._sheet,
         }
 
         return self

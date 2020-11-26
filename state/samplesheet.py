@@ -15,30 +15,39 @@ class SampleSheetError(Exception):
 
 
 # Headers above knockouts (0 or 1s) containing labels
-HEADERS = ['extraction', 'amplicon', 'knockout']
+HEADERS = ["extraction", "amplicon", "knockout"]
 
 
-SplitGroup = TypedDict('SplitGroup', {
-    'user': bool,
-    'auto': bool,
-})
+SplitGroup = TypedDict(
+    "SplitGroup",
+    {
+        "user": bool,
+        "auto": bool,
+    },
+)
 
 
-Knockout = TypedDict('Knockout', {
-    'headers': Dict[str, str],
-    'column': List[Optional[str]],
-    'split': SplitGroup,
-    'group': str,
-})
+Knockout = TypedDict(
+    "Knockout",
+    {
+        "headers": Dict[str, str],
+        "column": List[Optional[str]],
+        "split": SplitGroup,
+        "group": str,
+    },
+)
 
 
-SampleSheet = TypedDict('SampleSheet', {
-    'knockouts': List[Knockout],
-    'headers': List[str],
-    'width': int,
-    'height': int,
-    'group_by': str,
-})
+SampleSheet = TypedDict(
+    "SampleSheet",
+    {
+        "knockouts": List[Knockout],
+        "headers": List[str],
+        "width": int,
+        "height": int,
+        "group_by": str,
+    },
+)
 
 
 GroupCellCounts = Dict[str, Set[int]]
@@ -51,9 +60,9 @@ def load(filename: str) -> SampleSheet:
     cells = _locate_cells(table)
 
     if not cells:
-        raise SampleSheetError('Could not locate knockouts')
+        raise SampleSheetError("Could not locate knockouts")
     elif not cells.top:
-        raise SampleSheetError('Could not locate knockout names')
+        raise SampleSheetError("Could not locate knockout names")
 
     knockouts = []  # type: List[Knockout]
     for column_idx in range(cells.left, cells.right):
@@ -65,59 +74,64 @@ def load(filename: str) -> SampleSheet:
                 value = column[cells.top - offset]
                 if not value and knockouts:
                     # Groupings propagate left-to-right
-                    value = knockouts[-1]['headers'][key]
+                    value = knockouts[-1]["headers"][key]
 
                 headers[key] = value
 
-        headers['id'] = '[%s] %s' % (common.column_label(column_idx + 1),
-                                     headers['knockout'])
+        headers["id"] = "[%s] %s" % (
+            common.column_label(column_idx + 1),
+            headers["knockout"],
+        )
 
-        knockouts.append({
-            'column': ['DummyValue' if value else None
-                       for value in column[cells.top:cells.bottom]],
-            'headers': headers,
-            'group': str(column_idx),
-            'split': {
-                'auto': False,
-                'user': False,
-            },
-        })
+        knockouts.append(
+            {
+                "column": [
+                    "DummyValue" if value else None
+                    for value in column[cells.top : cells.bottom]
+                ],
+                "headers": headers,
+                "group": str(column_idx),
+                "split": {
+                    "auto": False,
+                    "user": False,
+                },
+            }
+        )
 
     samplesheet = {
-        'headers': HEADERS[-cells.top:],
-        'knockouts': knockouts,
-        'width': len(knockouts),
-        'height': cells.bottom - max(0, cells.top - 3),
-        'group_by': 'id',
+        "headers": HEADERS[-cells.top :],
+        "knockouts": knockouts,
+        "width": len(knockouts),
+        "height": cells.bottom - max(0, cells.top - 3),
+        "group_by": "id",
     }  # type: SampleSheet
 
     # Group by most significant available header
-    return group_by(samplesheet, samplesheet['headers'][0])
+    return group_by(samplesheet, samplesheet["headers"][0])
 
 
 def group_by(samplesheet: SampleSheet, key: str) -> SampleSheet:
     cell_counts = collections.defaultdict(set)  # type: GroupCellCounts
 
     samplesheet = copy.deepcopy(samplesheet)
-    samplesheet['group_by'] = key
+    samplesheet["group_by"] = key
 
-    for knockout in samplesheet['knockouts']:
-        current_group = knockout['headers'][key]
-        knockout['group'] = current_group
-        cell_counts[current_group].add(sum(map(bool, knockout['column'])))
+    for knockout in samplesheet["knockouts"]:
+        current_group = knockout["headers"][key]
+        knockout["group"] = current_group
+        cell_counts[current_group].add(sum(map(bool, knockout["column"])))
 
     cell_counts = dict(cell_counts)
-    for knockout in samplesheet['knockouts']:
-        group = knockout['group']
+    for knockout in samplesheet["knockouts"]:
+        group = knockout["group"]
         is_verification = len(cell_counts[group] - set((0,))) > 1
 
-        knockout['split'] = {
-            'auto': is_verification,
-            'user': False,
+        knockout["split"] = {
+            "auto": is_verification,
+            "user": False,
         }
 
-        knockout['column'] = _update_cell_labels(knockout['column'],
-                                                 is_verification)
+        knockout["column"] = _update_cell_labels(knockout["column"], is_verification)
 
     return samplesheet
 
@@ -125,29 +139,29 @@ def group_by(samplesheet: SampleSheet, key: str) -> SampleSheet:
 def set_user_split(samplesheet: SampleSheet, group: str, value: bool) -> SampleSheet:
     samplesheet = copy.deepcopy(samplesheet)
 
-    for knockout in samplesheet['knockouts']:
-        if knockout['group'] == group:
-            knockout['split']['user'] = value
+    for knockout in samplesheet["knockouts"]:
+        if knockout["group"] == group:
+            knockout["split"]["user"] = value
 
     return samplesheet
 
 
 def get_column_for_ko(samplesheet: SampleSheet, knockout: str) -> List[Optional[str]]:
-    for ko in samplesheet['knockouts']:
-        if ko['headers']['knockout'] == knockout:
-            return ko['column']
+    for ko in samplesheet["knockouts"]:
+        if ko["headers"]["knockout"] == knockout:
+            return ko["column"]
 
-    return ['<NA>'] * 96
+    return ["<NA>"] * 96
 
 
 def get_groups(samplesheet: SampleSheet) -> List[Tuple[str, bool]]:
     result = []
     observed = set()  # type: Set[str]
 
-    for knockout in samplesheet['knockouts']:
+    for knockout in samplesheet["knockouts"]:
         group = _group(knockout)
         if group not in observed:
-            result.append((group, any(knockout['split'].values())))
+            result.append((group, any(knockout["split"].values())))
             observed.add(group)
 
     return result
@@ -155,26 +169,27 @@ def get_groups(samplesheet: SampleSheet) -> List[Tuple[str, bool]]:
 
 def get_group(samplesheet: SampleSheet, group: str) -> List[Knockout]:
     knockouts = []
-    for knockout in samplesheet['knockouts']:
+    for knockout in samplesheet["knockouts"]:
         if _group(knockout) == group:
             knockouts.append(knockout)
 
     return knockouts
 
 
-_Rect = collections.namedtuple('_Rect', ('top', 'left', 'bottom', 'right'))
+_Rect = collections.namedtuple("_Rect", ("top", "left", "bottom", "right"))
 
 
 def _group(knockout: Knockout) -> str:
-    if any(knockout['split'].values()):
-        if knockout['group'] != knockout['headers']['knockout']:
-            return '{} ({})'.format(knockout['headers']['knockout'],
-                                    knockout['group'])
+    if any(knockout["split"].values()):
+        if knockout["group"] != knockout["headers"]["knockout"]:
+            return "{} ({})".format(knockout["headers"]["knockout"], knockout["group"])
 
-    return knockout['group']
+    return knockout["group"]
 
 
-def _update_cell_labels(column: List[Optional[str]], is_verification: bool) -> List[Optional[str]]:
+def _update_cell_labels(
+    column: List[Optional[str]], is_verification: bool
+) -> List[Optional[str]]:
     column = list(column)
     counter = 0
     for row, value in enumerate(column):
@@ -231,15 +246,19 @@ def _locate_cells(table: XLSXTable) -> Optional[_Rect]:
                 best_height = height
 
     if best_row is not None and best_column is not None:
-        return _Rect(top=best_row,
-                     left=best_column,
-                     bottom=best_row + best_height,
-                     right=best_column + best_width)
+        return _Rect(
+            top=best_row,
+            left=best_column,
+            bottom=best_row + best_height,
+            right=best_column + best_width,
+        )
 
     return None
 
 
-def _grow_selection(table: List[List[object]], row_idx: int, column_idx: int) -> Tuple[int, int]:
+def _grow_selection(
+    table: List[List[object]], row_idx: int, column_idx: int
+) -> Tuple[int, int]:
     width = 0
     height = 0
 

@@ -4,8 +4,8 @@ from .mapping import KOMappingWidget
 from .miseq import MiSeqOutputWidget
 
 __all__ = [
-    'ClonesWidget',
-    'KOMappingWidget',
-    'MiSeqOutputWidget',
-    'SampleSheetWidget',
+    "ClonesWidget",
+    "KOMappingWidget",
+    "MiSeqOutputWidget",
+    "SampleSheetWidget",
 ]

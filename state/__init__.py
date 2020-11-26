@@ -3,10 +3,10 @@ from .samplesheet import SampleSheet, SampleSheetError
 from .miseq import MiSeqOutput, MiSeqOutputError
 
 __all__ = [
-    'Clone',
-    'MiSeqOutput',
-    'MiSeqOutputError',
-    'State',
-    'SampleSheet',
-    'SampleSheetError',
+    "Clone",
+    "MiSeqOutput",
+    "MiSeqOutputError",
+    "State",
+    "SampleSheet",
+    "SampleSheetError",
 ]

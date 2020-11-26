@@ -26,7 +26,9 @@ class StrRenderWithBorder(wx.grid.GridCellStringRenderer):
         wx.grid.GridCellStringRenderer.__init__(self, *args, **kwargs)
 
     def Draw(self, grid, attr, dc, rect, row, col, isSelected):
-        wx.grid.GridCellStringRenderer.Draw(self, grid, attr, dc, rect, row, col, isSelected)
+        wx.grid.GridCellStringRenderer.Draw(
+            self, grid, attr, dc, rect, row, col, isSelected
+        )
 
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         dc.SetPen(wx.Pen(wx.BLACK, 2, wx.SOLID))
@@ -36,39 +38,51 @@ class StrRenderWithBorder(wx.grid.GridCellStringRenderer):
 
 
 class ClonesWidget(object):
-    def __init__(self, root: 'wx.App', state: State) -> None:
+    def __init__(self, root: "wx.App", state: State) -> None:
         self._root = root
         self._state = state
         self._clones = []  # type: List[Clone]
 
-        self._sort_by_picked = wx_find('clones_sort_by_picked')
-        self._show_picked = wx_find('clones_show_picked')
-        self._groups = wx_find('clones_groups')
-        self._props = wx_find('clones_properties')
+        self._sort_by_picked = wx_find("clones_sort_by_picked")
+        self._show_picked = wx_find("clones_show_picked")
+        self._groups = wx_find("clones_groups")
+        self._props = wx_find("clones_properties")
 
-        self.grid = wx_find('clones_report')
+        self.grid = wx_find("clones_report")
         self.grid.CreateGrid(0, _NUM_COLUMNS)
         self.grid.EnableEditing(False)
         self.grid.HideRowLabels()
 
-        for col, value in enumerate(('Export (Y/N)', 'Clone', '#KOs', 'KO',
-                                     'Index', 'Indels', '%', 'Total%',
-                                     '#Reads', 'Comments')):
+        for col, value in enumerate(
+            (
+                "Export (Y/N)",
+                "Clone",
+                "#KOs",
+                "KO",
+                "Index",
+                "Indels",
+                "%",
+                "Total%",
+                "#Reads",
+                "Comments",
+            )
+        ):
             self.grid.SetColLabelValue(col, value)
 
-        root.undo_buttons.append(wx.FindWindowByName('clones_button_undo'))
-        root.redo_buttons.append(wx.FindWindowByName('clones_button_redo'))
+        root.undo_buttons.append(wx.FindWindowByName("clones_button_undo"))
+        root.redo_buttons.append(wx.FindWindowByName("clones_button_redo"))
 
-        wx_bind('clones_groups', wx.EVT_LISTBOX, self.OnListBox)
-        wx_bind('clones_report', wx.grid.EVT_GRID_CELL_LEFT_DCLICK,
-                self.OnCellDoubleClick)
+        wx_bind("clones_groups", wx.EVT_LISTBOX, self.OnListBox)
+        wx_bind(
+            "clones_report", wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnCellDoubleClick
+        )
 
-        wx_bind('clones_export', wx.EVT_BUTTON, self.OnExportAll)
-        wx_bind('clones_export_everything', wx.EVT_BUTTON, self.OnExportEverything)
-        wx_bind('clones_save', wx.EVT_BUTTON, root.save_state)
-        wx_bind('clones_load', wx.EVT_BUTTON, root.load_state)
-        wx_bind('clones_show_picked', wx.EVT_CHECKBOX, self.refresh_ui)
-        wx_bind('clones_sort_by_picked', wx.EVT_CHECKBOX, self.refresh_ui)
+        wx_bind("clones_export", wx.EVT_BUTTON, self.OnExportAll)
+        wx_bind("clones_export_everything", wx.EVT_BUTTON, self.OnExportEverything)
+        wx_bind("clones_save", wx.EVT_BUTTON, root.save_state)
+        wx_bind("clones_load", wx.EVT_BUTTON, root.load_state)
+        wx_bind("clones_show_picked", wx.EVT_CHECKBOX, self.refresh_ui)
+        wx_bind("clones_sort_by_picked", wx.EVT_CHECKBOX, self.refresh_ui)
 
         self.refresh_ui()
 
@@ -89,15 +103,15 @@ class ClonesWidget(object):
             result = None
             current_row = 0
             for clone in self._clones:
-                knockouts = clone['knockouts']
+                knockouts = clone["knockouts"]
 
                 if current_row <= row < current_row + len(knockouts):
                     keys = sorted(knockouts)
                     key = keys[row - current_row]
-                    result = clone['knockouts'][key]
+                    result = clone["knockouts"][key]
                     break
 
-                current_row += len(clone['knockouts'])
+                current_row += len(clone["knockouts"])
 
             if result is not None:
                 if event.GetCol() < _COL_KOS:
@@ -105,25 +119,26 @@ class ClonesWidget(object):
 
                     self._root.refresh_ui()
                 elif event.GetCol() < _COL_COMMENT:
-                    self._state.miseq_toggle_picked(result['target'],
-                                                    result['index'])
+                    self._state.miseq_toggle_picked(result["target"], result["index"])
 
                     self._root.refresh_ui()
                 elif event.GetCol() == _COL_COMMENT:
-                    dlg = wx.TextEntryDialog(self.grid,
-                                             'Enter comment for knockout')
+                    dlg = wx.TextEntryDialog(self.grid, "Enter comment for knockout")
 
                     if dlg.ShowModal() == wx.ID_OK:
-                        self._state.miseq_set_comment(result['target'],
-                                                      result['index'],
-                                                      dlg.GetValue())
+                        self._state.miseq_set_comment(
+                            result["target"], result["index"], dlg.GetValue()
+                        )
 
                         self._root.refresh_ui()
 
-    def export_clones(self, everything: bool=False):
-        with wx.FileDialog(self._root.frame, "Export clones",
-                           wildcard="Spreadsheet|*.xlsx",
-                           style=wx.FD_SAVE) as widget:
+    def export_clones(self, everything: bool = False):
+        with wx.FileDialog(
+            self._root.frame,
+            "Export clones",
+            wildcard="Spreadsheet|*.xlsx",
+            style=wx.FD_SAVE,
+        ) as widget:
             if widget.ShowModal() != wx.ID_CANCEL:
                 filename = widget.GetPath()
 
@@ -145,8 +160,9 @@ class ClonesWidget(object):
 
     def _refresh_groups(self):
         groups = [k for k, _ in self._state.clones_groups()]
-        ui_groups = [self._groups.GetString(idx)
-                     for idx in range(self._groups.GetCount())]
+        ui_groups = [
+            self._groups.GetString(idx) for idx in range(self._groups.GetCount())
+        ]
 
         if groups != ui_groups:
             self._groups.Clear()
@@ -167,15 +183,14 @@ class ClonesWidget(object):
             clones.sort(key=_picked_count_key)
 
         if clones != self._clones:
-            n_rows = sum(max(1, len(clone['knockouts']))
-                         for clone in clones)
+            n_rows = sum(max(1, len(clone["knockouts"])) for clone in clones)
             self._reset_grid(_NUM_COLUMNS, n_rows)
 
             row = 0
             for clone in clones:
                 self._draw_clone(clone, row)
 
-                row += max(1, len(clone['knockouts']))
+                row += max(1, len(clone["knockouts"]))
 
             self._clones = clones
 
@@ -196,103 +211,111 @@ class ClonesWidget(object):
             props.Append(wx.propgrid.IntProperty(label, wx.propgrid.PG_LABEL, value))
 
         stats = self._knockout_stats(group)
-        count = stats['clones']['count']
+        count = stats["clones"]["count"]
 
-        _add_category('Clones')
-        _add_property('Clone count', count)
-        for key, value in enumerate(stats['clones']['with_kos']):
-            _add_property('Clones with data for %i KO(s)' % (key,), value)
+        _add_category("Clones")
+        _add_property("Clone count", count)
+        for key, value in enumerate(stats["clones"]["with_kos"]):
+            _add_property("Clones with data for %i KO(s)" % (key,), value)
 
-        for key, values in sorted(stats['knockouts'].items()):
+        for key, values in sorted(stats["knockouts"].items()):
             _add_category(key)
-            _add_property('Clones with %s' % (key,), values['has_data'])
-            _add_property('Clones with indels for %s' % (key,), values['has_peaks'])
-            _add_property('Clones with in-frame for %s' % (key,), values['inframe'])
+            _add_property("Clones with %s" % (key,), values["has_data"])
+            _add_property("Clones with indels for %s" % (key,), values["has_peaks"])
+            _add_property("Clones with in-frame for %s" % (key,), values["inframe"])
 
-        _add_category('%Samples with indel')
-        for key, value in stats['indels']:
-            _add_property('%% %r with %r' % key, (value * 100) // count)
+        _add_category("%Samples with indel")
+        for key, value in stats["indels"]:
+            _add_property("%% %r with %r" % key, (value * 100) // count)
 
     def _knockout_stats(self, group):
         data = self._state.clones_get_group(group)
 
-        knockout_count = [0] * (len(data[0]['knockouts']) + 1)
+        knockout_count = [0] * (len(data[0]["knockouts"]) + 1)
         for clone in data:
-            knockout_count[sum(map(bool, clone['knockouts'].values()))] += 1
+            knockout_count[sum(map(bool, clone["knockouts"].values()))] += 1
 
         knockouts = {}
-        for key in sorted(data[0]['knockouts']):
+        for key in sorted(data[0]["knockouts"]):
             has_data = 0
             has_peaks = 0
             inframe = 0
 
             for clone in data:
-                knockout = clone['knockouts'][key]
+                knockout = clone["knockouts"][key]
                 if knockout:
                     has_data += 1
-                    has_peaks += bool(knockout['peaks'])
-                    inframe += any(abs(peak['indel']) % 3 == 0
-                                   for peak in knockout['peaks'])
+                    has_peaks += bool(knockout["peaks"])
+                    inframe += any(
+                        abs(peak["indel"]) % 3 == 0 for peak in knockout["peaks"]
+                    )
 
             knockouts[key] = {
-                'has_data': has_data,
-                'has_peaks': has_peaks,
-                'inframe': inframe,
+                "has_data": has_data,
+                "has_peaks": has_peaks,
+                "inframe": inframe,
             }
 
         indels = {}
         for clone in data:
-            for knockout, values in clone['knockouts'].items():
+            for knockout, values in clone["knockouts"].items():
                 if values is not None:
-                    for peak in values['peaks']:
-                        key = (knockout, peak['indel'])
+                    for peak in values["peaks"]:
+                        key = (knockout, peak["indel"])
                         indels[key] = indels.get(key, 0) + 1
 
         sorted_indels = sorted(indels.items(), key=lambda it: it[-1], reverse=True)
 
         return {
-            'clones': {
-                'count': sum(knockout_count),
-                'with_kos': knockout_count,
+            "clones": {
+                "count": sum(knockout_count),
+                "with_kos": knockout_count,
             },
-            'knockouts': knockouts,
-            'indels': sorted_indels[:10],
+            "knockouts": knockouts,
+            "indels": sorted_indels[:10],
         }
 
     def _draw_clone(self, clone: Clone, row: int) -> None:
-        if any(ko['picked'] for ko in clone['knockouts'].values() if ko):
-            exported = 'Y'
+        if any(ko["picked"] for ko in clone["knockouts"].values() if ko):
+            exported = "Y"
         else:
-            exported = 'N'
+            exported = "N"
 
         self.grid.SetCellValue(row, _COL_EXPORTED, exported)
-        self.grid.SetCellValue(row, _COL_CLONE, clone['label'])
+        self.grid.SetCellValue(row, _COL_CLONE, clone["label"])
         self.grid.SetCellValue(row, _COL_NUM_KOS, str(_picked_count(clone)))
 
-        for idx, (label, knockout) in enumerate(sorted(clone['knockouts'].items())):
+        for idx, (label, knockout) in enumerate(sorted(clone["knockouts"].items())):
             self.grid.SetCellValue(row + idx, _COL_KOS, label)
 
             inframe = False
             if knockout:
-                self.grid.SetCellValue(row + idx, _COL_INDEX, str(knockout['index']))
+                self.grid.SetCellValue(row + idx, _COL_INDEX, str(knockout["index"]))
 
                 indels = []
                 indels_pct = []
-                for peak in knockout['peaks']:
-                    indels.append('%+i' % (peak['indel'],))
-                    indels_pct.append('%i' % (peak['pct'] * 100,))
-                    inframe = inframe or peak['inframe']
+                for peak in knockout["peaks"]:
+                    indels.append("%+i" % (peak["indel"],))
+                    indels_pct.append("%i" % (peak["pct"] * 100,))
+                    inframe = inframe or peak["inframe"]
 
-                self.grid.SetCellValue(row + idx, _COL_INDELS, ' / '.join(indels))
-                self.grid.SetCellValue(row + idx, _COL_INDELS_PCT, ' / '.join(indels_pct))
-                self.grid.SetCellValue(row + idx, _COL_INDELS_PCT_TOTAL,
-                                       '%i' % (100 * (knockout['indel'] / knockout['reads']),))
-                self.grid.SetCellValue(row + idx, _COL_NUM_READS, str(knockout['reads']))
-                self.grid.SetCellValue(row + idx, _COL_COMMENT, knockout['comment'])
+                self.grid.SetCellValue(row + idx, _COL_INDELS, " / ".join(indels))
+                self.grid.SetCellValue(
+                    row + idx, _COL_INDELS_PCT, " / ".join(indels_pct)
+                )
+                self.grid.SetCellValue(
+                    row + idx,
+                    _COL_INDELS_PCT_TOTAL,
+                    "%i" % (100 * (knockout["indel"] / knockout["reads"]),),
+                )
+                self.grid.SetCellValue(
+                    row + idx, _COL_NUM_READS, str(knockout["reads"])
+                )
+                self.grid.SetCellValue(row + idx, _COL_COMMENT, knockout["comment"])
             else:
-                self.grid.SetCellValue(row + idx, _COL_INDEX, '<NA>')
+                self.grid.SetCellValue(row + idx, _COL_INDEX, "<NA>")
 
-            if knockout and knockout['picked']:
+            if knockout and knockout["picked"]:
                 text_color = wx.BLACK
             else:
                 text_color = wx.LIGHT_GREY
@@ -303,9 +326,11 @@ class ClonesWidget(object):
                 self.grid.SetCellBackgroundColour(row + idx, column, bg_colour)
 
             for column in range(_NUM_COLUMNS):
-                self.grid.SetCellRenderer(row + idx, column, wx.grid.GridCellStringRenderer())
+                self.grid.SetCellRenderer(
+                    row + idx, column, wx.grid.GridCellStringRenderer()
+                )
 
-        row += len(clone['knockouts']) - 1
+        row += len(clone["knockouts"]) - 1
         for column in range(_NUM_COLUMNS):
             self.grid.SetCellRenderer(row, column, StrRenderWithBorder())
 
@@ -323,8 +348,9 @@ class ClonesWidget(object):
 
 
 def _picked_count_key(clone: Clone) -> int:
-    picked = sorted(key for key, ko in clone['knockouts'].items()
-                    if ko and ko['picked'])
+    picked = sorted(
+        key for key, ko in clone["knockouts"].items() if ko and ko["picked"]
+    )
     return (-len(picked), picked)
 
 
