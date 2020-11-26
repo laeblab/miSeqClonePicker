@@ -118,12 +118,14 @@ class State:
 
         any_picked = False
         for ko in clone["knockouts"].values():
-            any_picked |= miseq.is_picked(self.miseq, ko["target"], ko["index"])
+            if ko is not None:
+                any_picked |= miseq.is_picked(self.miseq, ko["target"], ko["index"])
 
         for ko in clone["knockouts"].values():
-            self.miseq = miseq.set_picked(
-                self.miseq, ko["target"], ko["index"], not any_picked
-            )
+            if ko is not None:
+                self.miseq = miseq.set_picked(
+                    self.miseq, ko["target"], ko["index"], not any_picked
+                )
 
         self._append_undo_history(state)
 
